@@ -54,6 +54,10 @@ jobs:
   deploy:
     needs: build
     name: Deploy
+
+    env:
+      build_secret: 1234
+
     runs-on: [ self-hosted, lecture ]
     # label-newproject 라는 이름으로 AWS EC2 가 Runner 를 작동시킬 때 사용했던 그 label
     steps:
