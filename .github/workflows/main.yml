@@ -55,13 +55,19 @@ jobs:
     runs-on: [ self-hosted, lecture ]
     steps:
       - name: Check secret
-        if: ${{ github.event.inputs.password }} != ${{ env.BUILD_SECRET }}
         run: |
-          echo "github.event.inputs.password : ${{ github.event.inputs.password }}"
-          echo "env.BUILD_SECRET : ${{ env.BUILD_SECRET }}"
-          echo ${{ github.event.inputs.password }} != ${{ env.BUILD_SECRET }}
-          echo ${{ github.event.inputs.password }} == ${{ env.BUILD_SECRET }}
-          exit 1
+          echo "github.event.inputs.password length: ${#{{ github.event.inputs.password }}}"
+          echo "env.BUILD_SECRET length: ${#{{ secrets.BUILD_SECRET }}}"
+
+          echo "github.event.inputs.password: '${{ github.event.inputs.password }}'"
+          echo "env.BUILD_SECRET: '${{ secrets.BUILD_SECRET }}'"
+
+          if [ "${{ github.event.inputs.password }}" != "${{ secrets.BUILD_SECRET }}" ]; then
+            echo "Passwords do not match."
+            exit 1
+          else
+            echo "Passwords match."
+          fi
 
       - name: Login to ghcr
         uses: docker/login-action@v1
