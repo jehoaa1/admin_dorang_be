@@ -3,4 +3,4 @@ from fastapi import FastAPI
 app = FastAPI()
 @app.get("/")
 async def root():
-    return {"Hello":"good12"}
+    return {"Hello":"야호"}
