@@ -55,7 +55,7 @@ jobs:
     runs-on: [ self-hosted, lecture ]
     steps:
       - name: check secret
-        if: ${{ github.event.inputs.password }} != ${{ env.BUILD_SECRET }}
+        if: ${{ github.event.inputs.password,, }} != ${{ env.BUILD_SECRET,, }}
         run: |
           echo "github.event.inputs.password : ${{ github.event.inputs.password }}s"
           echo "env.BUILD_SECRET : ${{ env.BUILD_SECRET }}s"
