@@ -57,7 +57,7 @@ jobs:
       - name: Check secret
         run: |
           PASSWORD_LENGTH=$(echo -n "${{ github.event.inputs.password }}" | wc -m)
-          SECRET_LENGTH=$(echo -n "${{ secrets.BUILD_SECRET }}" | wc -m)
+          SECRET_LENGTH=$(echo -n "${{ env.BUILD_SECRET }}" | wc -m)
           
           echo "github.event.inputs.password length: $PASSWORD_LENGTH"
           echo "env.BUILD_SECRET length: $SECRET_LENGTH"
