@@ -56,7 +56,10 @@ jobs:
     steps:
       - name: check secret
         if: github.event.inputs.password != ${{ env.BUILD_SECRET }}
-        run: exit 1
+        run: |
+          echo "github.event.inputs.password : ${{ github.event.inputs.password }}"
+          echo "env.BUILD_SECRET : ${{ env.BUILD_SECRET }}"
+          exit 1
 
       - name: Login to ghcr
         uses: docker/login-action@v1
