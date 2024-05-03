@@ -56,13 +56,13 @@ jobs:
     steps:
       - name: Check secret
         run: |
-          echo "github.event.inputs.password length: ${#github.event.inputs.password}"
-          echo "env.BUILD_SECRET length: ${#secrets.BUILD_SECRET}"
+          PASSWORD_LENGTH=$(echo "${{ github.event.inputs.password }}" | wc -c)
+          SECRET_LENGTH=$(echo "${{ secrets.BUILD_SECRET }}" | wc -c)
           
-          echo "github.event.inputs.password: '${{ github.event.inputs.password }}'"
-          echo "env.BUILD_SECRET: '${{ secrets.BUILD_SECRET }}'"
+          echo "github.event.inputs.password length: $PASSWORD_LENGTH"
+          echo "env.BUILD_SECRET length: $SECRET_LENGTH"
           
-          if [ "${{ github.event.inputs.password }}" != "${{ secrets.BUILD_SECRET }}" ]; then
+          if [ "$PASSWORD_LENGTH" -ne "$SECRET_LENGTH" ]; then
             echo "Passwords do not match."
             exit 1
           else
