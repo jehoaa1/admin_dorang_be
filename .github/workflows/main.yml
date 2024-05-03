@@ -2,6 +2,13 @@ name: Deploy with Docker
 # 내가 만드는 이름이다 뭐든 상관없다
 
 on:
+  workflow_dispatch:
+    inputs:
+      password:
+        description: '배포를 위한 password 를 입력하세요'
+        required: true
+        type: string
+
   push:
     branches: [ main ]
     # 무슨 브랜치가 업데이트 될 때 Actions 를 작동시킬지 적는다.
@@ -61,6 +68,10 @@ jobs:
     runs-on: [ self-hosted, lecture ]
     # label-newproject 라는 이름으로 AWS EC2 가 Runner 를 작동시킬 때 사용했던 그 label
     steps:
+      - name: check secret
+        if: github.event.inputs.password != env.build_secret
+        run: exit 1
+
       - name: Login to ghcr
         uses: docker/login-action@v1
         with:
