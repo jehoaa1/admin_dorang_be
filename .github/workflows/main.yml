@@ -57,8 +57,9 @@ jobs:
       - name: check secret
         if: github.event.inputs.password != ${{ env.BUILD_SECRET }}
         run: |
-          echo "github.event.inputs.password : ${{ github.event.inputs.password }}"
-          echo "env.BUILD_SECRET : ${{ env.BUILD_SECRET }}"
+          echo "github.event.inputs.password : ${{ github.event.inputs.password }}s"
+          echo "env.BUILD_SECRET : ${{ env.BUILD_SECRET }}s"
+          echo github.event.inputs.password != ${{ env.BUILD_SECRET }}
           exit 1
 
       - name: Login to ghcr
