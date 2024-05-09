@@ -11,7 +11,7 @@ COPY ./requirements.txt /lecture/requirements.txt
 RUN pip install --no-cache-dir -r /lecture/requirements.txt
 
 # 이제 app 에 있는 파일들을 /code/app 에 복사.
-COPY ./main.py /lecture/main.py
+COPY app/main.py /lecture/app/main.py
 
 # 실행
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
