@@ -1,15 +1,20 @@
-# 베이스 이미지 설정
+# 나의 python 버전
 FROM python:3.12.3
 
-# 작업 디렉토리 설정
+# /lecture 폴더 만들기
 WORKDIR /lecture
 
-# requirements.txt 복사 및 패키지 설치
+# PYTHONPATH 환경 변수 설정
+ENV PYTHONPATH=/lecture/app
+
+# ./requirements.txt 를 /lecture/requirements.txt 로 복사
 COPY ./requirements.txt /lecture/requirements.txt
+
+# requirements.txt 를 보고 모듈 전체 설치(-r)
 RUN pip install --no-cache-dir -r /lecture/requirements.txt
 
-# 모든 소스 코드 복사
+# 이제 app 에 있는 파일들을 /lecture/app 에 복사.
 COPY ./app /lecture/app
 
-# 실행 명령어 설정
+# 실행
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
