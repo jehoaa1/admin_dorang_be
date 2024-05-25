@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from pydantic import Field
 from pydantic.main import BaseModel
@@ -23,6 +23,10 @@ class SnsType(str, Enum):
 class Token(BaseModel):
     Authorization: str = None
 
+class CustomResponse(BaseModel):
+    result: str
+    result_msg: str
+    response: Any
 
 class EmailRecipients(BaseModel):
     name: str

@@ -11,11 +11,11 @@ from starlette.responses import JSONResponse
 from app.common.consts import JWT_SECRET, JWT_ALGORITHM
 from app.database.conn import db
 from app.database.schema import Users
-from app.models import SnsType, Token, UserToken, UserRegister
+from app.models import SnsType, Token, UserToken, UserRegister, CustomResponse
 
 router = APIRouter(prefix="/auth")
 
-@router.post("/register/{sns_type}", status_code=201, response_model=Token)
+@router.post("/register/{sns_type}", status_code=201, response_model=CustomResponse)
 async def register(sns_type: SnsType, reg_info: UserRegister, session: Session = Depends(db.session)):
     """
     `회원가입 API`\n
@@ -35,8 +35,6 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
             hash_pw = bcrypt.hashpw(reg_info.pw.encode("utf-8"), bcrypt.gensalt())
             new_user = Users.create(session, auto_commit=True, pw=hash_pw, email=reg_info.email, sns_type="E")
 
-            logging.info("User created successfully")
-
             # 필드 일치 여부 확인
             try:
                 token_data = UserToken.from_orm(new_user).dict(exclude={'pw', 'marketing_agree'})
@@ -46,43 +44,69 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
                 raise HTTPException(status_code=400, detail="Validation Error: Incorrect UserToken fields")
 
             token = dict(Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=1)}")
-            return token
+            return CustomResponse(
+                result="success",
+                result_msg="회원가입 성공",
+                response=token
+            )
         else:
             raise HTTPException(status_code=400, detail="NOT_SUPPORTED")
-    except Exception as e:
+    except HTTPException as e:
         logging.error(f"Error occurred: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        return CustomResponse(
+            result="failure",
+            result_msg=str(e.detail),
+            response={"status_code": e.status_code}
+        )
 
-@router.get("/validation-mail/{email}", status_code=200)
+@router.get("/mail-chk/{email}", status_code=200, response_model=CustomResponse)
 def read_user(email: str):
     try:
         user = Users.get(email=email)
-        if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        return user
-    except Exception as e:
+        if user:
+            raise HTTPException(status_code=409, detail="가입 된 메일")
+        return CustomResponse(
+            result="success",
+            result_msg="이용가능",
+            response={"result": True}
+        )
+    except HTTPException as e:
         # 예외 발생 시 로그 기록
         logging.error(f"Error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        return CustomResponse(
+            result="failure",
+            result_msg=str(e.detail),
+            response={"status_code": e.status_code}
+        )
 
-@router.post("/login/{sns_type}", status_code=200, response_model=Token)
+@router.post("/login/{sns_type}", status_code=200, response_model=CustomResponse)
 async def login(sns_type: SnsType, user_info: UserRegister):
-    if sns_type == SnsType.email:
-        is_exist = await is_email_exist(user_info.email)
-        if not user_info.email or not user_info.pw:
-            return JSONResponse(status_code=400, content=dict(msg="Email and PW must be provided'"))
-        if not is_exist:
-            return JSONResponse(status_code=400, content=dict(msg="NO_MATCH_USER"))
-        user = Users.get(email=user_info.email)
-        is_verified = bcrypt.checkpw(user_info.pw.encode("utf-8"), user.pw.encode("utf-8"))
-        if not is_verified:
-            return JSONResponse(status_code=400, content=dict(msg="NO_MATCH_USER"))
-        token_data = UserToken.from_orm(user).dict(exclude={'pw', 'marketing_agree'})
+    try:
+        if sns_type == SnsType.email:
+            is_exist = await is_email_exist(user_info.email)
+            if not user_info.email or not user_info.pw:
+                raise HTTPException(status_code=400, detail="Email and PW must be provided")
+            if not is_exist:
+                raise HTTPException(status_code=400, detail="NO_MATCH_USER")
+            user = Users.get(email=user_info.email)
+            is_verified = bcrypt.checkpw(user_info.pw.encode("utf-8"), user.pw.encode("utf-8"))
+            if not is_verified:
+                raise HTTPException(status_code=400, detail="NO_MATCH_USER")
+            token_data = UserToken.from_orm(user).dict(exclude={'pw', 'marketing_agree'})
 
-        token = dict(
-            Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=1)}")
-        return token
-    return JSONResponse(status_code=400, content=dict(msg="NOT_SUPPORTED"))
+            token = dict(
+                Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=1)}")
+
+            return CustomResponse(
+                result="success",
+                result_msg="로그인 성공",
+                response=token
+            )
+    except HTTPException as e:
+        return CustomResponse(
+            result="failure",
+            result_msg="로그인 실패",
+            response={"status_code": "401"})
 
 
 async def is_email_exist(email: str):
