@@ -15,7 +15,6 @@ from app.models import SnsType, Token, UserToken, UserRegister
 
 router = APIRouter(prefix="/auth")
 
-
 @router.post("/register/{sns_type}", status_code=201, response_model=Token)
 async def register(sns_type: SnsType, reg_info: UserRegister, session: Session = Depends(db.session)):
     """
@@ -25,19 +24,6 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
     :param session:
     :return:
     """
-
-    # data = {'user': 'test'}
-    #
-    # # 추가 클레임을 데이터에 병합
-    # additional_claims = {"aud": "some_audience", "foo": "bar"}
-    # data.update(additional_claims)
-    #
-    # # JWT 토큰 생성 (만료 시간 1시간 설정 예시)
-    # token = dict(
-    #     Authorization=f"Bearer {create_access_token(data=data, expires_delta=1)}"
-    # )
-    # return token
-
     try:
         if sns_type == SnsType.email:
             is_exist = await is_email_exist(reg_info.email)
@@ -67,6 +53,17 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
         logging.error(f"Error occurred: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+@router.get("/validation-mail/{email}", status_code=200)
+def read_user(email: str):
+    try:
+        user = Users.get(email=email)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except Exception as e:
+        # 예외 발생 시 로그 기록
+        logging.error(f"Error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @router.post("/login/{sns_type}", status_code=200, response_model=Token)
 async def login(sns_type: SnsType, user_info: UserRegister):
@@ -76,14 +73,12 @@ async def login(sns_type: SnsType, user_info: UserRegister):
             return JSONResponse(status_code=400, content=dict(msg="Email and PW must be provided'"))
         if not is_exist:
             return JSONResponse(status_code=400, content=dict(msg="NO_MATCH_USER"))
-        print("===============")
         user = Users.get(email=user_info.email)
-        print(f"user === {user}")
         is_verified = bcrypt.checkpw(user_info.pw.encode("utf-8"), user.pw.encode("utf-8"))
         if not is_verified:
             return JSONResponse(status_code=400, content=dict(msg="NO_MATCH_USER"))
         token_data = UserToken.from_orm(user).dict(exclude={'pw', 'marketing_agree'})
-        print(f"token_data === {token_data}")
+
         token = dict(
             Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=1)}")
         return token

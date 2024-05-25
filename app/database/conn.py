@@ -51,8 +51,14 @@ class SQLAlchemy:
         try:
             db_session = self._session()
             yield db_session
+            db_session.commit()  # 명시적으로 커밋
+        except:
+            if db_session is not None:
+                db_session.rollback()  # 예외 발생 시 롤백
+            raise
         finally:
-            db_session.close()
+            if db_session is not None:
+                db_session.close()
 
     @property
     def session(self):
