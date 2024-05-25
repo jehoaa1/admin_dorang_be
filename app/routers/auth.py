@@ -2,7 +2,9 @@ from datetime import datetime, timedelta
 
 import bcrypt
 import jwt
+from jose import JWTError
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 import logging
 # TODO:
 from sqlalchemy.orm import Session
@@ -28,9 +30,9 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
         if sns_type == SnsType.email:
             is_exist = await is_email_exist(reg_info.email)
             if not reg_info.email or not reg_info.pw:
-                raise HTTPException(status_code=400, detail="Email and PW must be provided")
+                raise HTTPException(status_code=400, detail="메일 또는 비밀번호 정보가 없습니다.")
             if is_exist:
-                raise HTTPException(status_code=400, detail="EMAIL_EXISTS")
+                raise HTTPException(status_code=400, detail="가입된 메일 정보")
 
             hash_pw = bcrypt.hashpw(reg_info.pw.encode("utf-8"), bcrypt.gensalt())
             new_user = Users.create(session, auto_commit=True, pw=hash_pw, email=reg_info.email, sns_type="E")
@@ -54,7 +56,7 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
     except HTTPException as e:
         logging.error(f"Error occurred: {str(e)}")
         return CustomResponse(
-            result="failure",
+            result="fail",
             result_msg=str(e.detail),
             response={"status_code": e.status_code}
         )
@@ -74,7 +76,7 @@ def read_user(email: str):
         # 예외 발생 시 로그 기록
         logging.error(f"Error occurred: {e}")
         return CustomResponse(
-            result="failure",
+            result="fail",
             result_msg=str(e.detail),
             response={"status_code": e.status_code}
         )
@@ -104,10 +106,15 @@ async def login(sns_type: SnsType, user_info: UserRegister):
             )
     except HTTPException as e:
         return CustomResponse(
-            result="failure",
+            result="fail",
             result_msg="로그인 실패",
             response={"status_code": "401"})
 
+@router.post("/verify-token")
+def verify_token(token: str = Depends(OAuth2PasswordBearer(tokenUrl="/verify-token"))):
+    # 토큰 디코딩
+    decoded_token = decode_access_token(token)
+    return {"message": "Token is valid", "payload": decoded_token}
 
 async def is_email_exist(email: str):
     get_email = Users.get(email=email)
@@ -122,3 +129,10 @@ def create_access_token(*, data: dict = None, expires_delta: int = None):
         to_encode.update({"exp": datetime.utcnow() + timedelta(hours=expires_delta)})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
+
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=JWT_ALGORITHM)
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
