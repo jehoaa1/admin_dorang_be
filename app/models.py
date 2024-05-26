@@ -11,6 +11,7 @@ class UserRegister(BaseModel):
     # pip install 'pydantic[email]'
     email: str = None
     pw: str = None
+    name: str = None
 
 
 class SnsType(str, Enum):

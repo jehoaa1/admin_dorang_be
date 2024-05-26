@@ -35,7 +35,7 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
                 raise HTTPException(status_code=400, detail="가입된 메일 정보")
 
             hash_pw = bcrypt.hashpw(reg_info.pw.encode("utf-8"), bcrypt.gensalt())
-            new_user = Users.create(session, auto_commit=True, pw=hash_pw, email=reg_info.email, sns_type="E")
+            new_user = Users.create(session, auto_commit=True, pw=hash_pw, email=reg_info.email, sns_type="E", name=reg_info.name)
 
             # 필드 일치 여부 확인
             try:
@@ -49,7 +49,7 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
             return CustomResponse(
                 result="success",
                 result_msg="회원가입 성공",
-                response=token
+                response={"result":"회원가입 성공"}
             )
         else:
             raise HTTPException(status_code=400, detail="NOT_SUPPORTED")
