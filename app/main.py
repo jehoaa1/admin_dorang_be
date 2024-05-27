@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.conn import db
 from dependencies import get_query_token, get_token_header
 from internal import admin
-from routers import items, users, auth, members
+from routers import course, users, auth, members
 from app.common.config import conf
 
 c = conf()
@@ -24,8 +24,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(members.router)
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(members.router, prefix="/members", tags=["members"])
+app.include_router(course.router, prefix="/course", tags=["course"])
 app.include_router(
     admin.router,
     prefix="/admin",
@@ -34,9 +35,6 @@ app.include_router(
     responses={418: {"description": "I'm a teapot"}},
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Hello Bigger Applications!"}
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

@@ -1,10 +1,7 @@
 from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional, Any
-
-from pydantic import Field
 from pydantic.main import BaseModel
-
 
 class UserRegister(BaseModel):
     email: str = None
@@ -18,14 +15,29 @@ class MemberRegister(BaseModel):
     institution_name: Optional[str] = None
     birth_day: datetime
 
+class MemberPatch(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    parent_phone: Optional[str] = None
+    institution_name: Optional[str] = None
+    birth_day: Optional[datetime] = None
+
 class CourseRegister(BaseModel):
     members_id: int
+    class_type: str
     start_date: datetime
     end_date: datetime
     session_count: int
-    phone: Optional[str] = None
-    parent_phone: str = None
-    institution_name: Optional[str] = None
+    payment_amount: int
+
+class CoursePatch(BaseModel):
+    members_id: Optional[int] = None
+    class_type: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    session_count: Optional[int] = None
+    payment_amount: Optional[int] = None
+
 
 
 class SnsType(str, Enum):
@@ -43,40 +55,11 @@ class CustomResponse(BaseModel):
     result_msg: str
     response: Any
 
-class EmailRecipients(BaseModel):
-    name: str
-    email: str
-
-
-class SendEmail(BaseModel):
-    email_to: List[EmailRecipients] = None
-
-
-class KakaoMsgBody(BaseModel):
-    msg: str = None
-
-
-class MessageOk(BaseModel):
-    message: str = Field(default="OK")
-
-
 class UserToken(BaseModel):
     id: int
     email: Optional[str] = None
     name: Optional[str] = None
     sns_type: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class UserMe(BaseModel):
-    id: int
-    email: str = None
-    name: str = None
-    phone_number: str = None
-    profile_img: str = None
-    sns_type: str = None
 
     class Config:
         from_attributes = True
@@ -96,6 +79,7 @@ class MembersBase(BaseModel):
 class CourseBase(BaseModel):
     id: int
     members_id: int
+    class_type: str
     start_date: datetime
     end_date: datetime
     session_count: int

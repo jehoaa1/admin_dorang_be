@@ -187,9 +187,10 @@ class Course(Base, BaseMixin):
     __tablename__ = "course"
     id = Column(Integer, primary_key=True, index=True)
     members_id = Column(Integer, ForeignKey('members.id'))  # 외부 키로 설정
+    class_type = Column(String(length=1), nullable=False)  # 외부 키로 설정
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
-    session_count = Column(Integer, index=True)
-    payment_amount = Column(Integer, index=True)
+    session_count = Column(Integer, nullable=False)
+    payment_amount = Column(Integer, nullable=False)
     member = relationship("Members", back_populates="courses")  # Members 클래스와의 관계 설정
 

@@ -15,7 +15,7 @@ from app.database.conn import db
 from app.database.schema import Users
 from app.models import SnsType, Token, UserToken, UserRegister, CustomResponse
 
-router = APIRouter(prefix="/auth")
+router = APIRouter()
 
 @router.post("/register/{sns_type}", status_code=201, tags=["auth"], response_model=CustomResponse)
 async def register(sns_type: SnsType, reg_info: UserRegister, session: Session = Depends(db.session)):
@@ -62,7 +62,7 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
         )
 
 @router.get("/mail-chk/{email}", status_code=200, tags=["auth"], response_model=CustomResponse)
-def read_user(email: str):
+def get_user(email: str):
     try:
         user = Users.get(email=email)
         if user:
