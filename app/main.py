@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.conn import db
 from dependencies import get_query_token, get_token_header
 from internal import admin
-from routers import items, users, auth
+from routers import items, users, auth, members
 from app.common.config import conf
 
 c = conf()
@@ -24,10 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(items.router)
+app.include_router(members.router)
 app.include_router(
     admin.router,
     prefix="/admin",

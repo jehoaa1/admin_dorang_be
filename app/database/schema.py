@@ -4,6 +4,7 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
+    Date,
     func,
     Enum,
     Boolean,
@@ -18,6 +19,7 @@ class BaseMixin:
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, nullable=False, default=func.utc_timestamp())
     updated_at = Column(DateTime, nullable=False, default=func.utc_timestamp(), onupdate=func.utc_timestamp())
+    deleted_at = Column(DateTime, nullable=True)
 
     def __init__(self):
         self._q = None
@@ -169,26 +171,25 @@ class Users(Base, BaseMixin):
     email = Column(String(length=255), nullable=True)
     pw = Column(String(length=2000), nullable=True)
     name = Column(String(length=255), nullable=True)
-    phone_number = Column(String(length=20), nullable=True, unique=True)
-    profile_img = Column(String(length=1000), nullable=True)
     sns_type = Column(Enum("FB", "G", "K", "E"), nullable=True)
-    marketing_agree = Column(Boolean, nullable=True, default=True)
-    keys = relationship("ApiKeys", back_populates="users")
 
+class Members(Base, BaseMixin):
+    __tablename__ = "members"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(length=255), nullable=True)
+    phone = Column(String(length=255), nullable=True)
+    parent_phone = Column(String(length=255), nullable=False)
+    institution_name = Column(String(length=255), nullable=True)
+    birth_day = Column(Date, nullable=False)
+    courses = relationship("Course", back_populates="member")  # Course 클래스와의 관계 설정
 
-class ApiKeys(Base, BaseMixin):
-    __tablename__ = "api_keys"
-    access_key = Column(String(length=64), nullable=False, index=True)
-    secret_key = Column(String(length=64), nullable=False)
-    user_memo = Column(String(length=40), nullable=True)
-    status = Column(Enum("active", "stopped", "deleted"), default="active")
-    is_whitelisted = Column(Boolean, default=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    whitelist = relationship("ApiWhiteLists", backref="api_keys")
-    users = relationship("Users", back_populates="keys")
+class Course(Base, BaseMixin):
+    __tablename__ = "course"
+    id = Column(Integer, primary_key=True, index=True)
+    members_id = Column(Integer, ForeignKey('members.id'))  # 외부 키로 설정
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    session_count = Column(Integer, index=True)
+    payment_amount = Column(Integer, index=True)
+    member = relationship("Members", back_populates="courses")  # Members 클래스와의 관계 설정
 
-
-class ApiWhiteLists(Base, BaseMixin):
-    __tablename__ = "api_whitelists"
-    ip_addr = Column(String(length=64), nullable=False)
-    api_key_id = Column(Integer, ForeignKey("api_keys.id"), nullable=False)

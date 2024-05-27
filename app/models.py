@@ -1,17 +1,31 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional, Any
 
 from pydantic import Field
 from pydantic.main import BaseModel
-from pydantic.networks import EmailStr, IPvAnyAddress
 
 
 class UserRegister(BaseModel):
-    # pip install 'pydantic[email]'
     email: str = None
     pw: str = None
     name: str = None
+
+class MemberRegister(BaseModel):
+    name: str = None
+    phone: Optional[str] = None
+    parent_phone: str = None
+    institution_name: Optional[str] = None
+    birth_day: datetime
+
+class CourseRegister(BaseModel):
+    members_id: int
+    start_date: datetime
+    end_date: datetime
+    session_count: int
+    phone: Optional[str] = None
+    parent_phone: str = None
+    institution_name: Optional[str] = None
 
 
 class SnsType(str, Enum):
@@ -50,8 +64,6 @@ class UserToken(BaseModel):
     id: int
     email: Optional[str] = None
     name: Optional[str] = None
-    phone_number: Optional[str] = None
-    profile_img: Optional[str] = None
     sns_type: Optional[str] = None
 
     class Config:
@@ -69,6 +81,28 @@ class UserMe(BaseModel):
     class Config:
         from_attributes = True
 
+
+class MembersBase(BaseModel):
+    id: int
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    parent_phone: str
+    institution_name: Optional[str] = None
+    birth_day: date
+
+    class Config:
+        from_attributes = True
+
+class CourseBase(BaseModel):
+    id: int
+    members_id: int
+    start_date: datetime
+    end_date: datetime
+    session_count: int
+    payment_amount: int
+
+    class Config:
+        from_attributes = True
 
 class AddApiKey(BaseModel):
     user_memo: str = None

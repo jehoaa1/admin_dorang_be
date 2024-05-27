@@ -17,7 +17,7 @@ from app.models import SnsType, Token, UserToken, UserRegister, CustomResponse
 
 router = APIRouter(prefix="/auth")
 
-@router.post("/register/{sns_type}", status_code=201, response_model=CustomResponse)
+@router.post("/register/{sns_type}", status_code=201, tags=["auth"], response_model=CustomResponse)
 async def register(sns_type: SnsType, reg_info: UserRegister, session: Session = Depends(db.session)):
     """
     `회원가입 API`\n
@@ -61,7 +61,7 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
             response={"status_code": e.status_code}
         )
 
-@router.get("/mail-chk/{email}", status_code=200, response_model=CustomResponse)
+@router.get("/mail-chk/{email}", status_code=200, tags=["auth"], response_model=CustomResponse)
 def read_user(email: str):
     try:
         user = Users.get(email=email)
@@ -81,7 +81,7 @@ def read_user(email: str):
             response={"status_code": e.status_code}
         )
 
-@router.post("/login/{sns_type}", status_code=200, response_model=CustomResponse)
+@router.post("/login/{sns_type}", status_code=200, tags=["auth"], response_model=CustomResponse)
 async def login(sns_type: SnsType, user_info: UserRegister):
     try:
         if sns_type == SnsType.email:
@@ -110,7 +110,7 @@ async def login(sns_type: SnsType, user_info: UserRegister):
             result_msg="로그인 실패",
             response={"status_code": "401"})
 
-@router.post("/verify-token")
+@router.post("/verify-token", status_code=200, tags=["auth"])
 def verify_token(token: str = Depends(OAuth2PasswordBearer(tokenUrl="/verify-token"))):
     # 토큰 디코딩
     decoded_token = decode_access_token(token)
