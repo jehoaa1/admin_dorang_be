@@ -174,3 +174,40 @@ def patch_course(id: int, reg_info: CoursePatch, session: Session = Depends(db.s
             result_msg=str(e.detail),  # HTTPException의 detail에 해당하는 메시지를 반환
             response={"status_code": e.status_code}
         )
+
+@router.delete("/{id}", status_code=200, response_model=CustomResponse)
+def del_course(id: int, session: Session = Depends(db.session)):
+    """
+        `수강생 정보 수정 API`\n
+         id: 필수
+    """
+
+    try:
+        if not id:
+            raise HTTPException(status_code=404, detail="필수값 누락")
+
+        # 이름으로 회원 검색
+        course = session.query(Course).filter(
+            Course.id == id,
+            Course.deleted_at.is_(None)  # deleted_at이 null인 경우만 필터링
+        ).first()
+
+        if not course:
+            raise HTTPException(status_code=404, detail="존재하지 않는 수강 id")
+
+        course.deleted_at = datetime.now()
+        session.commit()
+
+        # 삭제된 회원 정보를 반환하지 않음
+        return CustomResponse(
+            result="success",
+            result_msg="수강 정보 삭제 성공",
+            response={"result": "수강생 정보가 삭제되었습니다."}
+        )
+    except HTTPException as e:
+        # 예외 발생 시 로그 기록
+        return CustomResponse(
+            result="fail",
+            result_msg=str(e.detail),  # HTTPException의 detail에 해당하는 메시지를 반환
+            response={"status_code": e.status_code}
+        )

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database.conn import db
 from dependencies import get_query_token, get_token_header
 from internal import admin
-from routers import course, users, auth, members
+from routers import course, auth, members, classBooking
 from app.common.config import conf
 
 c = conf()
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(members.router, prefix="/members", tags=["members"])
 app.include_router(course.router, prefix="/course", tags=["course"])
+app.include_router(classBooking.router, prefix="/class-booking", tags=["class-booking"])
 app.include_router(
     admin.router,
     prefix="/admin",

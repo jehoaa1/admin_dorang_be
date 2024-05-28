@@ -38,6 +38,14 @@ class CoursePatch(BaseModel):
     session_count: Optional[int] = None
     payment_amount: Optional[int] = None
 
+class ClassBookingRegister(BaseModel):
+    course_id: int
+    reservation_date: datetime
+    enrollment_status: str
+
+class ClassBookingPatch(BaseModel):
+    reservation_date: Optional[datetime] = None
+    enrollment_status: Optional[str] = None
 
 
 class SnsType(str, Enum):
@@ -87,6 +95,16 @@ class CourseBase(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ClassBookingBase(BaseModel):
+    id: int
+    course_id: int
+    reservation_date: datetime
+    enrollment_status: str
+
+    class Config:
+        from_attributes = True
+
 
 class AddApiKey(BaseModel):
     user_memo: str = None
