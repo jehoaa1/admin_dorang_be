@@ -4,7 +4,7 @@ import bcrypt
 import jwt
 from jose import JWTError
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
 # TODO:
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from app.database.schema import Users
 from app.models import SnsType, Token, UserToken, UserRegister, CustomResponse
 
 router = APIRouter()
+security = HTTPBearer()
 
 @router.post("/register/{sns_type}", status_code=201, tags=["auth"], response_model=CustomResponse)
 async def register(sns_type: SnsType, reg_info: UserRegister, session: Session = Depends(db.session)):
@@ -110,9 +111,10 @@ async def login(sns_type: SnsType, user_info: UserRegister):
             result_msg="로그인 실패",
             response={"status_code": "401"})
 
+# verify_token_route 엔드포인트
 @router.post("/verify-token", status_code=200, tags=["auth"])
-def verify_token(token: str = Depends(OAuth2PasswordBearer(tokenUrl="/verify-token"))):
-    # 토큰 디코딩
+def verify_token_route(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
     decoded_token = decode_access_token(token)
     return {"message": "Token is valid", "payload": decoded_token}
 
