@@ -9,7 +9,8 @@ from typing import Optional
 
 router = APIRouter()
 @router.get("/list", status_code=200, response_model=CustomResponse)
-def get_member(name: Optional[str] = None, session: Session = Depends(db.session)):
+def get_member(name: Optional[str] = None, phone: Optional[str] = None, parent_phone: Optional[str] = None, start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None, session: Session = Depends(db.session)):
     """
         `수강생 정보 API`\n
          name: 첫 글자는 무조건 동일해야함.
@@ -19,13 +20,24 @@ def get_member(name: Optional[str] = None, session: Session = Depends(db.session
         try:
             # 이름으로 회원 검색
             query = session.query(Members).filter(
-                Members.name.ilike(f"{name}%"),
                 Members.deleted_at.is_(None)  # deleted_at이 null인 경우만 필터링
             )
             if name:
-                members = query.all()
-            else:
-                members = session.query(Members).filter(Members.deleted_at.is_(None)).all()  # 삭제되지 않은 회원만 가져옴
+                query = query.filter(Members.name.ilike(f"{name}%"))
+
+            if phone:
+                query = query.filter(Members.phone.ilike(f"%{phone}%"))
+
+            if parent_phone:
+                query = query.filter(Members.parent_phone.ilike(f"%{parent_phone}%"))
+
+            if start_date:
+                query = query.filter(Members.created_at >= start_date)
+
+            if end_date:
+                query = query.filter(Members.created_at <= end_date)
+
+            members = query.all()
 
             # 결과를 파이썬 객체로 변환
             users_response = []
