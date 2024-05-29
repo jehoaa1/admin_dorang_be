@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.conn import db
 from app.database.schema import Members, Course
 from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
+from sqlalchemy import and_, or_
 
 router = APIRouter()
 
@@ -30,10 +31,19 @@ async def get_course(
             members_where.append(Members.parent_phone == parent_phone)
         if class_type:
             course_where.append(Course.class_type == class_type)
-        if start_date:
-            course_where.append(Course.start_date <= start_date)
-        if end_date:
-            course_where.append(Course.end_date >= end_date)
+        if start_date and end_date:
+            course_where.append(
+                or_(
+                    and_(Course.start_date >= start_date, Course.start_date <= end_date),
+                    and_(Course.end_date >= start_date, Course.end_date <= end_date),
+                    and_(Course.start_date <= start_date, Course.end_date >= end_date)
+                )
+            )
+        else:
+            if start_date:
+                course_where.append(Course.start_date >= start_date)
+            if end_date:
+                course_where.append(Course.end_date <= end_date)
 
         # 수강정보 검색
         query = session.query(Course).filter(
