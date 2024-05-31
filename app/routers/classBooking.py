@@ -17,6 +17,7 @@ def get_class_booking(
     end_date: Optional[date] = None,
     name: Optional[str] = None,
     class_type: Optional[str] = None,
+    enrollment_status: Optional[str] = None,
     use_pagination: bool = Query(False),  # 페이징 사용 여부
     page: int = Query(1, ge=1),  # 기본 페이지 번호는 1
     per_page: int = Query(10, ge=1, le=100),  # 페이지당 항목 수 제한 (10~100)
@@ -52,6 +53,10 @@ def get_class_booking(
             if class_type:
                 query = query.filter(Course.class_type == class_type)
 
+            if enrollment_status:
+                query = query.filter(ClassBooking.enrollment_status == enrollment_status)
+
+
             # 전체 결과 수 계산
             total_count = query.count()
 
@@ -65,12 +70,15 @@ def get_class_booking(
             users_response = [
                 {
                     "id": cb.id,
+                    "course_id": cb.course_id,
                     "reservation_date": cb.reservation_date,
                     "enrollment_status": cb.enrollment_status,
                     "course": {
                         "id": cb.course.id,
                         "class_type": cb.course.class_type,
-                        "payment_amount": cb.course.payment_amount
+                        "payment_amount": cb.course.payment_amount,
+                        "start_date": cb.course.start_date,
+                        "end_date": cb.course.end_date
                     },
                     "member": {
                         "name": cb.course.member.name,
