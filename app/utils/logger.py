@@ -45,8 +45,8 @@ async def api_logger(request: Request, response=None, error=None):
         errorDetail=error_log,
         client=user_log,
         processedTime=str(round(t * 1000, 5)) + "ms",
-        datetimeUTC=datetime.utcnow().strftime(time_format),
-        datetimeKST=(datetime.utcnow() + timedelta(hours=9)).strftime(time_format),
+        datetimeUTC=datetime.now().strftime(time_format),
+        datetimeKST=(datetime.now() + timedelta(hours=9)).strftime(time_format),
     )
     if error and error.status_code >= 500:
         logger.error(json.dumps(log_dict))

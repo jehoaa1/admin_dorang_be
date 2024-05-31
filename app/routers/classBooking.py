@@ -6,16 +6,27 @@ from sqlalchemy.orm import Session
 from app.database.schema import ClassBooking, Course, Members
 from app.database.conn import db
 from typing import Optional
+from fastapi import Query
 
 router = APIRouter()
 
 @router.get("/list", status_code=200, response_model=CustomResponse)
-def get_class_booking(start_date: Optional[date] = None, end_date: Optional[date] = None, member_id: Optional[int] = None, member_name: Optional[str] = None, session: Session = Depends(db.session)):
+def get_class_booking(
+    id:Optional[int] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    name: Optional[str] = None,
+    class_type: Optional[str] = None,
+    use_pagination: bool = Query(False),  # 페이징 사용 여부
+    page: int = Query(1, ge=1),  # 기본 페이지 번호는 1
+    per_page: int = Query(10, ge=1, le=100),  # 페이지당 항목 수 제한 (10~100)
+    session: Session = Depends(db.session)
+):
     """
         `수강생 정보 API`\n
          name: 첫 글자는 무조건 동일해야함.
         :return:
-        """
+    """
     try:
         try:
             # 이름으로 회원 검색
@@ -26,6 +37,8 @@ def get_class_booking(start_date: Optional[date] = None, end_date: Optional[date
             ).join(Members).filter(
                 Members.deleted_at.is_(None)
             )
+            if id:
+                query = query.filter(ClassBooking.id == id)
 
             if start_date:
                 query = query.filter(func.date(ClassBooking.reservation_date) >= start_date)
@@ -33,13 +46,21 @@ def get_class_booking(start_date: Optional[date] = None, end_date: Optional[date
             if end_date:
                 query = query.filter(func.date(ClassBooking.reservation_date) <= end_date)
 
-            if member_name:
-                query = query.filter(Members.name.ilike(f"{member_name}%"))
+            if name:
+                query = query.filter(Members.name.ilike(f"%{name}%"))
 
-            if member_id:
-                query = query.filter(Members.id == member_id)
+            if class_type:
+                query = query.filter(Course.class_type == class_type)
 
-            class_booking = query.all()
+            # 전체 결과 수 계산
+            total_count = query.count()
+
+            if use_pagination:
+                # 페이징을 적용하여 쿼리 실행
+                class_booking = query.offset((page - 1) * per_page).limit(per_page).all()
+            else:
+                # 페이징을 사용하지 않고 모든 결과 가져오기
+                class_booking = query.all()
 
             users_response = [
                 {
@@ -59,10 +80,18 @@ def get_class_booking(start_date: Optional[date] = None, end_date: Optional[date
                 } for cb in class_booking
             ]
 
+            response_data = {
+                "result": users_response,
+                "total_count": total_count
+            }
+
+            if use_pagination:
+                response_data.update({"page": page, "per_page": per_page})
+
             return CustomResponse(
                 result="success",
                 result_msg="회원 정보 및 수강 정보 가져오기 성공",
-                response={"result": users_response}
+                response=response_data
             )
         except Exception as ve:
             raise HTTPException(status_code=404, detail="회원 정보 및 수강 정보 불러오기 실패")
@@ -73,6 +102,7 @@ def get_class_booking(start_date: Optional[date] = None, end_date: Optional[date
             result_msg=str(e.detail),
             response={"status_code": e.status_code}
         )
+
 
 @router.post("/register", status_code=201, response_model=CustomResponse)
 async def register_class_booking(reg_info: ClassBookingRegister, session: Session = Depends(db.session)):

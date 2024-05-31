@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 
 class D:
     def __init__(self, *args):
-        self.utc_now = datetime.utcnow()
+        self.utc_now = datetime.now()
         self.timedelta = 0
 
     @classmethod

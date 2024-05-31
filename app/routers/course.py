@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.conn import db
 from app.database.schema import Members, Course, ClassBooking
 from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
-from sqlalchemy import and_, or_
+from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import aliased
 
 router = APIRouter()
@@ -120,6 +120,101 @@ async def get_course(
             result_msg=str(e.detail),
             response={"status_code": e.status_code}
         )
+
+
+@router.get("/remain/session-count/list", status_code=200, tags=["course"], response_model=CustomResponse)
+async def get_course(
+        id: Optional[int] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        session: Session = Depends(db.session)
+):
+    try:
+        course_alias = aliased(Course)
+        members_alias = aliased(Members)
+        class_booking_alias = aliased(ClassBooking)
+
+        course_where = []
+
+        if id:
+            course_where.append(course_alias.id == id)
+
+        if start_date and end_date:
+            course_where.append(
+                or_(
+                    and_(course_alias.start_date >= start_date, course_alias.start_date <= end_date),
+                    and_(course_alias.end_date >= start_date, course_alias.end_date <= end_date),
+                    and_(course_alias.start_date <= start_date, course_alias.end_date >= end_date)
+                )
+            )
+        else:
+            if start_date:
+                course_where.append(course_alias.start_date >= start_date)
+            if end_date:
+                course_where.append(course_alias.end_date <= end_date)
+
+        # 수강정보 검색
+        subq = session.query(
+            class_booking_alias.course_id,
+            func.count(class_booking_alias.course_id).label("use_num")
+        ).filter(
+            class_booking_alias.enrollment_status.in_([1, 2]),
+            class_booking_alias.deleted_at.is_(None)
+        ).group_by(
+            class_booking_alias.course_id
+        ).subquery()
+
+        query = session.query(course_alias).filter(
+            course_alias.deleted_at.is_(None),
+            *course_where
+        ).join(
+            members_alias,
+            course_alias.members_id == members_alias.id
+        ).outerjoin(
+            subq,
+            course_alias.id == subq.c.course_id
+        ).filter(
+            or_(course_alias.session_count > subq.c.use_num, subq.c.use_num.is_(None))
+        )
+
+        courses = query.all()
+
+        course_infos = []
+        for course in courses:
+            course_info = {
+                "id": course.id,
+                "members_id": course.members_id,
+                "start_date": course.start_date,
+                "end_date": course.end_date,
+                "session_count": course.session_count,
+                "payment_amount": course.payment_amount,
+                "payment_date": course.created_at,
+                "class_type": course.class_type,
+                "member": {
+                    "name": course.member.name,
+                    "phone": course.member.phone,
+                    "parent_phone": course.member.parent_phone,
+                    "institution_name": course.member.institution_name,
+                    "birth_day": course.member.birth_day,
+                }
+            }
+            course_infos.append(course_info)
+
+        return CustomResponse(
+            result="success",
+            result_msg="수강 정보 가져오기 성공",
+            response={"result": course_infos}
+        )
+    except Exception as ve:
+        raise HTTPException(status_code=404, detail="수강 정보 불러오기 실패")
+    except HTTPException as e:
+        # 예외 발생 시 로그 기록
+        return CustomResponse(
+            result="fail",
+            result_msg=str(e.detail),
+            response={"status_code": e.status_code}
+        )
+
 
 @router.post("/register", status_code=201, response_model=CustomResponse)
 async def register_course(reg_info: CourseRegister, session: Session = Depends(db.session)):
