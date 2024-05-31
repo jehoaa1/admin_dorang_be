@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from app.database.conn import db
-from app.database.schema import Members, Course
+from app.database.schema import Members, Course, ClassBooking
 from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
 from sqlalchemy import and_, or_
 
@@ -22,6 +22,7 @@ async def get_course(
     try:
         course_where = []
         members_where = []
+        class_booking_where = []
 
         if name:
             members_where.append(Members.name.ilike(f"{name}%"))
@@ -52,27 +53,42 @@ async def get_course(
         ).join(Members).filter(
             Members.deleted_at.is_(None),
             *members_where
+        ).join(ClassBooking, isouter=True).filter(
+            ClassBooking.deleted_at.is_(None),  # deleted_at이 null인 경우만 필터링
         )
 
         courses = query.all()
 
-        course_infos = [
-            {
+        course_infos = []
+        for course in courses:
+            course_info = {
                 "id": course.id,
                 "members_id": course.members_id,
                 "start_date": course.start_date,
                 "end_date": course.end_date,
                 "session_count": course.session_count,
                 "payment_amount": course.payment_amount,
+                "payment_date": course.created_at,
                 "member": {
                     "name": course.member.name,
                     "phone": course.member.phone,
                     "parent_phone": course.member.parent_phone,
                     "institution_name": course.member.institution_name,
                     "birth_day": course.member.birth_day,
+                },
+                "class_booking": []  # 클래스 예약 정보를 저장할 빈 리스트
+            }
+
+            # 해당 코스의 클래스 예약 정보 가져오기
+            for class_booking in course.class_bookings:
+                class_booking_info = {
+                    "id": class_booking.id,
+                    "reservation_date": class_booking.reservation_date,
+                    "enrollment_status": class_booking.enrollment_status
                 }
-            } for course in courses
-        ]
+                course_info["class_booking"].append(class_booking_info)
+
+            course_infos.append(course_info)
 
         return CustomResponse(
             result="success",

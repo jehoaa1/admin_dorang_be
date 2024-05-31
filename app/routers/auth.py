@@ -46,7 +46,7 @@ async def register(sns_type: SnsType, reg_info: UserRegister, session: Session =
                 logging.error(f"Validation error: {ve}")
                 raise HTTPException(status_code=400, detail="Validation Error: Incorrect UserToken fields")
 
-            token = dict(Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=1)}")
+            token = dict(Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=10)}")
             return CustomResponse(
                 result="success",
                 result_msg="회원가입 성공",
@@ -98,7 +98,7 @@ async def login(sns_type: SnsType, user_info: UserRegister):
             token_data = UserToken.from_orm(user).dict(exclude={'pw', 'marketing_agree'})
 
             token = dict(
-                Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=1)}")
+                Authorization=f"Bearer {create_access_token(data=token_data, expires_delta=10)}")
 
             return CustomResponse(
                 result="success",

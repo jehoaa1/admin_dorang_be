@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from fastapi import APIRouter, Depends, HTTPException
 import logging
 from sqlalchemy.orm import Session
@@ -6,22 +6,30 @@ from app.database.conn import db
 from app.database.schema import Members
 from app.models import MemberRegister, MemberPatch, CustomResponse, MembersBase, CourseBase
 from typing import Optional
+from fastapi import Query
 
 router = APIRouter()
 @router.get("/list", status_code=200, response_model=CustomResponse)
-def get_member(name: Optional[str] = None, phone: Optional[str] = None, parent_phone: Optional[str] = None, start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None, session: Session = Depends(db.session)):
-    """
-        `수강생 정보 API`\n
-         name: 첫 글자는 무조건 동일해야함.
-        :return:
-        """
+def get_member(
+    id: Optional[int] = None,
+    name: Optional[str] = None,
+    phone: Optional[str] = None,
+    parent_phone: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    page: int = Query(1, ge=1),  # 기본 페이지 번호는 1
+    per_page: int = Query(10, ge=1, le=100),  # 페이지당 항목 수 제한 (10~100)
+    session: Session = Depends(db.session)
+):
     try:
         try:
             # 이름으로 회원 검색
             query = session.query(Members).filter(
                 Members.deleted_at.is_(None)  # deleted_at이 null인 경우만 필터링
             )
+            if id:
+                query = query.filter(Members.id == id)
+
             if name:
                 query = query.filter(Members.name.ilike(f"{name}%"))
 
@@ -35,9 +43,12 @@ def get_member(name: Optional[str] = None, phone: Optional[str] = None, parent_p
                 query = query.filter(Members.created_at >= start_date)
 
             if end_date:
+                end_date = datetime.combine(end_date.date(), time.max)
                 query = query.filter(Members.created_at <= end_date)
 
-            members = query.all()
+            # 페이징을 적용하여 쿼리 실행
+            total_count = query.count()
+            members = query.offset((page - 1) * per_page).limit(per_page).all()
 
             # 결과를 파이썬 객체로 변환
             users_response = []
@@ -53,7 +64,7 @@ def get_member(name: Optional[str] = None, phone: Optional[str] = None, parent_p
             return CustomResponse(
                 result="success",
                 result_msg="회원 정보 및 수강 정보 가져오기 성공",
-                response={"result": users_response}
+                response={"result": users_response, "total_count": total_count}
             )
         except Exception as ve:
             logging.error(f"Validation error: {ve}")
