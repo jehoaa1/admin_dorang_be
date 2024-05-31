@@ -31,7 +31,7 @@ def get_member(
                 query = query.filter(Members.id == id)
 
             if name:
-                query = query.filter(Members.name.ilike(f"{name}%"))
+                query = query.filter(Members.name.ilike(f"%{name}%"))
 
             if phone:
                 query = query.filter(Members.phone.ilike(f"%{phone}%"))

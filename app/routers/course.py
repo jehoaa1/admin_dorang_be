@@ -32,7 +32,7 @@ async def get_course(
         members_where = []
 
         if name:
-            members_where.append(members_alias.name.ilike(f"{name}%"))
+            members_where.append(members_alias.name.ilike(f"%{name}%"))
         if phone:
             members_where.append(members_alias.phone == phone)
         if parent_phone:
@@ -76,6 +76,7 @@ async def get_course(
                 "session_count": course.session_count,
                 "payment_amount": course.payment_amount,
                 "payment_date": course.created_at,
+                "class_type": course.class_type,
                 "member": {
                     "name": course.member.name,
                     "phone": course.member.phone,
