@@ -14,6 +14,7 @@ from typing import Optional
 
 @router.get("/list", status_code=200, tags=["course"], response_model=CustomResponse)
 async def get_course(
+        id: Optional[int] = None,
         name: Optional[str] = None,
         phone: Optional[str] = None,
         parent_phone: Optional[str] = None,
@@ -31,6 +32,8 @@ async def get_course(
         course_where = []
         members_where = []
 
+        if id:
+            course_where.append(course_alias.id == id)
         if name:
             members_where.append(members_alias.name.ilike(f"%{name}%"))
         if phone:
