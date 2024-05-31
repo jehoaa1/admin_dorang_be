@@ -6,8 +6,11 @@ from app.database.conn import db
 from app.database.schema import Members, Course, ClassBooking
 from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
 from sqlalchemy import and_, or_
+from sqlalchemy.orm import aliased
 
 router = APIRouter()
+
+from typing import Optional
 
 @router.get("/list", status_code=200, tags=["course"], response_model=CustomResponse)
 async def get_course(
@@ -17,47 +20,51 @@ async def get_course(
         class_type: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        offset: int = 0,  # 페이지 오프셋
+        limit: int = 10,  # 페이지당 결과 수
         session: Session = Depends(db.session)
 ):
     try:
+        course_alias = aliased(Course)
+        members_alias = aliased(Members)
+
         course_where = []
         members_where = []
-        class_booking_where = []
 
         if name:
-            members_where.append(Members.name.ilike(f"{name}%"))
+            members_where.append(members_alias.name.ilike(f"{name}%"))
         if phone:
-            members_where.append(Members.phone == phone)
+            members_where.append(members_alias.phone == phone)
         if parent_phone:
-            members_where.append(Members.parent_phone == parent_phone)
+            members_where.append(members_alias.parent_phone == parent_phone)
         if class_type:
-            course_where.append(Course.class_type == class_type)
+            course_where.append(course_alias.class_type == class_type)
         if start_date and end_date:
             course_where.append(
                 or_(
-                    and_(Course.start_date >= start_date, Course.start_date <= end_date),
-                    and_(Course.end_date >= start_date, Course.end_date <= end_date),
-                    and_(Course.start_date <= start_date, Course.end_date >= end_date)
+                    and_(course_alias.start_date >= start_date, course_alias.start_date <= end_date),
+                    and_(course_alias.end_date >= start_date, course_alias.end_date <= end_date),
+                    and_(course_alias.start_date <= start_date, course_alias.end_date >= end_date)
                 )
             )
         else:
             if start_date:
-                course_where.append(Course.start_date >= start_date)
+                course_where.append(course_alias.start_date >= start_date)
             if end_date:
-                course_where.append(Course.end_date <= end_date)
+                course_where.append(course_alias.end_date <= end_date)
 
         # 수강정보 검색
-        query = session.query(Course).filter(
-            Course.deleted_at.is_(None),  # deleted_at이 null인 경우만 필터링
+        query = session.query(course_alias).filter(
+            course_alias.deleted_at.is_(None),  # deleted_at이 null인 경우만 필터링
             *course_where
-        ).join(Members).filter(
-            Members.deleted_at.is_(None),
+        ).join(members_alias).filter(
+            members_alias.deleted_at.is_(None),
             *members_where
-        ).join(ClassBooking, isouter=True).filter(
-            ClassBooking.deleted_at.is_(None),  # deleted_at이 null인 경우만 필터링
         )
 
-        courses = query.all()
+        # 페이징 적용
+        total_count = query.count()  # 전체 결과 수 계산
+        courses = query.offset(offset).limit(limit).all()  # 페이지에 해당하는 결과만 가져오기
 
         course_infos = []
         for course in courses:
@@ -80,7 +87,12 @@ async def get_course(
             }
 
             # 해당 코스의 클래스 예약 정보 가져오기
-            for class_booking in course.class_bookings:
+            class_bookings = session.query(ClassBooking).filter(
+                ClassBooking.course_id == course.id,
+                ClassBooking.deleted_at.is_(None)  # deleted_at이 null인 경우만 필터링
+            ).all()
+
+            for class_booking in class_bookings:
                 class_booking_info = {
                     "id": class_booking.id,
                     "reservation_date": class_booking.reservation_date,
@@ -93,7 +105,7 @@ async def get_course(
         return CustomResponse(
             result="success",
             result_msg="수강 정보 가져오기 성공",
-            response={"result": course_infos}
+            response={"result": course_infos, "total_count": total_count}
         )
     except Exception as ve:
         raise HTTPException(status_code=404, detail="수강 정보 불러오기 실패")
