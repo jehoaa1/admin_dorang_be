@@ -28,6 +28,7 @@ class CourseRegister(BaseModel):
     start_date: datetime
     end_date: datetime
     session_count: int
+    payment_date: date
     payment_amount: int
 
 class CoursePatch(BaseModel):
@@ -36,6 +37,7 @@ class CoursePatch(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     session_count: Optional[int] = None
+    payment_date: Optional[date] = None
     payment_amount: Optional[int] = None
 
 class ClassBookingRegister(BaseModel):

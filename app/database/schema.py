@@ -192,6 +192,7 @@ class Course(Base, BaseMixin):
     end_date = Column(DateTime, nullable=False)
     session_count = Column(Integer, nullable=False)
     payment_amount = Column(Integer, nullable=False)
+    payment_date = Column(DateTime, nullable=False)
     member = relationship("Members", back_populates="courses")  # Members 클래스와의 관계 설정
     class_bookings = relationship("ClassBooking", back_populates="course")  # ClassBooking
 

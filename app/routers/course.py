@@ -78,7 +78,7 @@ async def get_course(
                 "end_date": course.end_date,
                 "session_count": course.session_count,
                 "payment_amount": course.payment_amount,
-                "payment_date": course.created_at,
+                "payment_date": course.payment_date,
                 "class_type": course.class_type,
                 "member": {
                     "name": course.member.name,
@@ -224,7 +224,7 @@ async def register_course(reg_info: CourseRegister, session: Session = Depends(d
         :return:
         """
     try:
-        if not reg_info.members_id or not reg_info.class_type or not reg_info.start_date or not reg_info.end_date or not reg_info.session_count or not reg_info.payment_amount:
+        if not reg_info.members_id or not reg_info.class_type or not reg_info.start_date or not reg_info.end_date or not reg_info.session_count or not reg_info.payment_date or not reg_info.payment_amount:
             raise HTTPException(status_code=400, detail="필수값이 없습니다.")
 
         # 이름으로 회원 검색
@@ -242,6 +242,7 @@ async def register_course(reg_info: CourseRegister, session: Session = Depends(d
             start_date=reg_info.start_date,
             end_date=reg_info.end_date,
             session_count=reg_info.session_count,
+            payment_date=reg_info.payment_date,
             payment_amount=reg_info.payment_amount
         )
         session.add(new_course)
@@ -292,6 +293,9 @@ def patch_course(id: int, reg_info: CoursePatch, session: Session = Depends(db.s
 
         if reg_info.session_count:
             course.session_count = reg_info.session_count
+
+        if reg_info.payment_date:
+            course.payment_date = reg_info.payment_date
 
         if reg_info.payment_amount:
             course.payment_amount = reg_info.payment_amount
