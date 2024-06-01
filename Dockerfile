@@ -9,6 +9,8 @@ ENV PYTHONPATH=/lecture/app
 
 # ./requirements.txt 를 /lecture/requirements.txt 로 복사
 COPY ./requirements.txt /lecture/requirements.txt
+# .env 파일 복사
+COPY .env /lecture/.env
 
 # requirements.txt 를 보고 모듈 전체 설치(-r)
 RUN pip install --no-cache-dir -r /lecture/requirements.txt
