@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.models import ClassBookingRegister, ClassBookingPatch, CustomResponse, MembersBase, CourseBase, ClassBookingBase
 from datetime import datetime, date
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 from app.database.schema import ClassBooking, Course, Members
 from app.database.conn import db
@@ -59,6 +59,9 @@ def get_class_booking(
 
             # 전체 결과 수 계산
             total_count = query.count()
+
+            # 결과 정렬
+            query = query.order_by(desc(ClassBooking.id))
 
             if use_pagination:
                 # 페이징을 적용하여 쿼리 실행

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.conn import db
 from app.database.schema import Members, Course, ClassBooking
 from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, desc
 from sqlalchemy.orm import aliased
 from app.common.consts import CLASS_TYPE
 from fastapi import Query
@@ -69,6 +69,8 @@ async def get_course(
 
         # 페이징 적용
         total_count = query.count()  # 전체 결과 수 계산
+        # 결과 정렬
+        query = query.order_by(desc(course_alias.id))
         courses = query.offset((page - 1) * per_page).limit(per_page).all()
 
         course_infos = []

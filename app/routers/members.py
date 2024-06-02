@@ -1,6 +1,7 @@
 from datetime import datetime, time
 from fastapi import APIRouter, Depends, HTTPException
 import logging
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from app.database.conn import db
 from app.database.schema import Members
@@ -48,6 +49,8 @@ def get_member(
 
             # 페이징을 적용하여 쿼리 실행
             total_count = query.count()
+            # 결과 정렬
+            query = query.order_by(desc(Members.id))
             members = query.offset((page - 1) * per_page).limit(per_page).all()
 
             # 결과를 파이썬 객체로 변환

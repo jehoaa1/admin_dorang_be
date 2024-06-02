@@ -46,14 +46,6 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(members.router, prefix="/members", tags=["members"], dependencies=[Depends(verify_token)])
 app.include_router(course.router, prefix="/course", tags=["course"], dependencies=[Depends(verify_token)])
 app.include_router(classBooking.router, prefix="/class-booking", tags=["class-booking"], dependencies=[Depends(verify_token)])
-app.include_router(
-    admin.router,
-    prefix="/admin",
-    tags=["admin"],
-    dependencies=[Depends(get_token_header)],
-    responses={418: {"description": "I'm a teapot"}},
-)
-
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
