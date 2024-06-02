@@ -7,7 +7,7 @@ from app.database.schema import ClassBooking, Course, Members
 from app.database.conn import db
 from typing import Optional
 from fastapi import Query
-
+from app.common.consts import CLASS_TYPE, ENROLLMENT_STATUS
 router = APIRouter()
 
 @router.get("/list", status_code=200, response_model=CustomResponse)
@@ -73,9 +73,11 @@ def get_class_booking(
                     "course_id": cb.course_id,
                     "reservation_date": cb.reservation_date,
                     "enrollment_status": cb.enrollment_status,
+                    "enrollment_status_txt": ENROLLMENT_STATUS.get(cb.enrollment_status, "-"),
                     "course": {
                         "id": cb.course.id,
                         "class_type": cb.course.class_type,
+                        "class_type_txt": CLASS_TYPE.get(cb.course.class_type, "Unknown class"),
                         "payment_amount": cb.course.payment_amount,
                         "start_date": cb.course.start_date,
                         "end_date": cb.course.end_date

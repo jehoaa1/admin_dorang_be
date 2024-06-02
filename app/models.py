@@ -2,6 +2,8 @@ from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional, Any
 from pydantic.main import BaseModel
+from pydantic import field_validator
+from app.common.consts import CLASS_TYPE
 
 class UserRegister(BaseModel):
     email: str = None
@@ -94,6 +96,11 @@ class CourseBase(BaseModel):
     end_date: datetime
     session_count: int
     payment_amount: int
+    @field_validator("class_type")
+    def replace_class_type(cls, v):
+        if isinstance(v, str):
+            return CLASS_TYPE.get(v, "Unknown class")
+        return v
 
     class Config:
         from_attributes = True

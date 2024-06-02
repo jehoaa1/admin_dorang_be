@@ -7,6 +7,7 @@ from app.database.schema import Members, Course, ClassBooking
 from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
 from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import aliased
+from app.common.consts import CLASS_TYPE
 
 router = APIRouter()
 
@@ -80,6 +81,7 @@ async def get_course(
                 "payment_amount": course.payment_amount,
                 "payment_date": course.payment_date,
                 "class_type": course.class_type,
+                "class_type_txt": CLASS_TYPE.get(course.class_type, "Unknown class"),
                 "member": {
                     "name": course.member.name,
                     "phone": course.member.phone,
@@ -190,6 +192,7 @@ async def get_course(
                 "payment_amount": course.payment_amount,
                 "payment_date": course.created_at,
                 "class_type": course.class_type,
+                "class_type_txt": CLASS_TYPE.get(course.class_type, "Unknown class"),
                 "member": {
                     "name": course.member.name,
                     "phone": course.member.phone,
