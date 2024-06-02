@@ -158,7 +158,6 @@ async def register_class_booking(reg_info: ClassBookingRegister, session: Sessio
         if count_class_booking_duplication >= 1:
             raise HTTPException(status_code=403, detail=f"중복 된 수강 날짜")
 
-
         new_class_booking = ClassBooking(
             course_id=reg_info.course_id,
             reservation_date=reg_info.reservation_date.strftime('%Y-%m-%d %H:%M:00'),

@@ -8,6 +8,7 @@ from app.models import CustomResponse, CourseRegister, CoursePatch, CourseBase
 from sqlalchemy import func, and_, or_
 from sqlalchemy.orm import aliased
 from app.common.consts import CLASS_TYPE
+from fastapi import Query
 
 router = APIRouter()
 
@@ -22,8 +23,8 @@ async def get_course(
         class_type: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        offset: int = 0,  # 페이지 오프셋
-        limit: int = 10,  # 페이지당 결과 수
+        page: int = Query(1, ge=1),  # 기본 페이지 번호는 1
+        per_page: int = Query(10, ge=1, le=100),  # 페이지당 항목 수 제한 (10~100)
         session: Session = Depends(db.session)
 ):
     try:
@@ -68,7 +69,7 @@ async def get_course(
 
         # 페이징 적용
         total_count = query.count()  # 전체 결과 수 계산
-        courses = query.offset(offset).limit(limit).all()  # 페이지에 해당하는 결과만 가져오기
+        courses = query.offset((page - 1) * per_page).limit(per_page).all()
 
         course_infos = []
         for course in courses:
