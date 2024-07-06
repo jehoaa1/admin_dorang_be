@@ -18,7 +18,7 @@ from app.models import SnsType, Token, UserToken, UserRegister, CustomResponse
 router = APIRouter()
 security = HTTPBearer()
 
-@router.post("/register/{sns_type}", status_code=201, tags=["auth"], response_model=CustomResponse)
+@router.post("/register/{sns_type}", status_code=201, response_model=CustomResponse)
 async def register(sns_type: SnsType, reg_info: UserRegister, session: Session = Depends(db.session)):
     """
     `회원가입 API`\n

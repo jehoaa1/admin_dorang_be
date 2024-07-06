@@ -14,7 +14,7 @@ router = APIRouter()
 
 from typing import Optional
 
-@router.get("/list", status_code=200, tags=["course"], response_model=CustomResponse)
+@router.get("/list", status_code=200, response_model=CustomResponse)
 async def get_course(
         id: Optional[int] = None,
         name: Optional[str] = None,
