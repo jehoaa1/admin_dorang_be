@@ -8,7 +8,9 @@ WORKDIR /lecture
 ENV PYTHONPATH=/lecture/app
 
 # 필요한 패키지 설치를 위해 apt 업데이트 및 필수 패키지 설치
-RUN apt-get update && apt-get install -y cmake
+RUN apt-get update && apt-get install -y \
+    cmake \
+    libgl1-mesa-glx
 
 # ./requirements.txt 를 /lecture/requirements.txt 로 복사
 COPY ./requirements.txt /lecture/requirements.txt
@@ -16,11 +18,9 @@ COPY ./requirements.txt /lecture/requirements.txt
 # .env 파일 복사
 COPY .env /lecture/.env
 
-# pip 업그레이드
-RUN pip install --upgrade pip
-
-# requirements.txt 를 보고 모듈 전체 설치(-r)
-RUN pip install --no-cache-dir -r /lecture/requirements.txt
+# pip 업그레이드 및 패키지 설치
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r /lecture/requirements.txt
 
 # app 에 있는 파일들을 /lecture/app 에 복사
 COPY ./app /lecture/app
