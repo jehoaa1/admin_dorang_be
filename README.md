@@ -23,6 +23,16 @@
 
 - Swagger UI를 통한 API 문서 제공 (`/docs`)
 
+## 🗂 데이터베이스 스키마
+
+![ERD](./images/ERD.png)
+
+- **주요 테이블**:
+  - `users`: 회원 정보
+  - `students`: 학생 정보
+  - `courses`: 강의 정보
+  - `payments`: 결제 내역
+
 ## ⚙️ 실행 방법
 
 1. **가상환경 설정 및 패키지 설치**
