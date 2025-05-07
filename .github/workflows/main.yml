@@ -2,11 +2,6 @@ name: Deploy with Docker
 
 on:
   workflow_dispatch:
-    inputs:
-      password:
-        description: '배포를 위한 password 를 입력하세요'
-        required: true
-        type: string
 
 env:
   DOCKER_IMAGE: ghcr.io/${{ github.actor }}/myproject
